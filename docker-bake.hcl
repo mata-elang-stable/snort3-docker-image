@@ -19,7 +19,7 @@ variable "hyperscan_version" {
 }
 
 variable "image_repo_host" {
-    default = "mfscy"
+    default = "ghcr.io/mata-elang-stable/snort3-docker-image"
 }
 
 variable "image_tag" {
@@ -51,11 +51,6 @@ target "docker-metadata-action" {}
 target "virtual-platforms" {
   platforms = [
     "linux/amd64",
-    // "linux/386",
-    "linux/arm64",
-    // "linux/arm/v7",
-    // "linux/ppc64le",
-    // "linux/s390x",
   ]
 }
 
