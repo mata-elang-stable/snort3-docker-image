@@ -3,12 +3,12 @@ name: Build Snort3 Docker Image
 on:
   push:
     branches:
-      - v2.0
+      - main
     tags:
       - "v*"
   pull_request:
     branches:
-      - v2.0 # Optional: Run the workflow on PRs target
+      - main
 
 env:
   REGISTRY: ghcr.io
