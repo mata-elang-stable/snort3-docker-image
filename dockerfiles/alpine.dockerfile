@@ -1,16 +1,25 @@
-ARG ALPINE_VERSION=3.20
+ARG ALPINE_VERSION=3.23
 
 FROM alpine:${ALPINE_VERSION} AS builder
 
-ARG SNORT_VERSION=3.3.4.0
+ARG SNORT_VERSION=3.12.1.0
 ARG HYPERSCAN_VERSION=5.4.2
-ARG LIBDAQ_VERSION=3.0.16
-ARG LIBDNET_VERSION=1.18.0
+ARG LIBDAQ_VERSION=3.0.27
+ARG LIBDNET_VERSION=1.18.2
+ARG JEMALLOC_VERSION=5.3.1
+ARG LIBSAFEC_VERSION=3.9.1
+
+ENV SNORT_VERSION=${SNORT_VERSION} \
+    HYPERSCAN_VERSION=${HYPERSCAN_VERSION} \
+    LIBDAQ_VERSION=${LIBDAQ_VERSION} \
+    LIBDNET_VERSION=${LIBDNET_VERSION} \
+    JEMALLOC_VERSION=${JEMALLOC_VERSION} \
+    LIBSAFEC_VERSION=${LIBSAFEC_VERSION}
 
 RUN set -eux; \
     apk add --no-cache \
     build-base cmake bash autoconf automake pkgconf \
-    libpcap libpcap-dev pcre pcre-dev gcc g++ libc-dev \
+    libpcap libpcap-dev pcre2 pcre2-dev gcc g++ libc-dev \
     luajit luajit-dev check check-dev hwloc hwloc-dev \
     openssl-dev libssl3 openssl zlib zlib-dev flex flex-dev bison \
     xz xz-dev libuuid linux-headers git \
@@ -56,7 +65,7 @@ RUN set -eux; \
     make install \
     ) ;
 
-ADD https://github.com/rurban/safeclib/releases/download/v3.7.1/safeclib-3.7.1.tar.gz /tmp/libsafec.tar.gz
+ADD https://github.com/rurban/safeclib/releases/download/v${LIBSAFEC_VERSION}/safeclib-${LIBSAFEC_VERSION}.tar.gz /tmp/libsafec.tar.gz
 
 RUN set -eux; \
     mkdir -p /tmp/libsafec_src ; \
@@ -68,7 +77,7 @@ RUN set -eux; \
     make install \
     ) ;
 
-ADD https://github.com/jemalloc/jemalloc/releases/download/5.3.0/jemalloc-5.3.0.tar.bz2 /tmp/jemalloc.tar.bz2
+ADD https://github.com/jemalloc/jemalloc/releases/download/${JEMALLOC_VERSION}/jemalloc-${JEMALLOC_VERSION}.tar.bz2 /tmp/jemalloc.tar.bz2
 
 RUN set -eux; \
     mkdir -p /tmp/jemalloc_src ; \
@@ -106,7 +115,7 @@ FROM alpine:${ALPINE_VERSION}
 
 RUN set -eux; \
     apk add --no-cache \
-    libpcap pcre numactl \
+    libpcap pcre2 numactl \
     luajit check hwloc \
     libssl3 openssl zlib flex bison \
     xz libuuid libtirpc \
