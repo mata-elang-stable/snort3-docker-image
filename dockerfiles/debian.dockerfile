@@ -1,24 +1,29 @@
-ARG DEBIAN_VERSION=12-slim
+ARG DEBIAN_VERSION=13-slim
 
 FROM debian:${DEBIAN_VERSION} AS builder
 
-ARG SNORT_VERSION=3.3.4.0
+ARG SNORT_VERSION=3.12.1.0
 ARG HYPERSCAN_VERSION=5.4.2
-ARG LIBDAQ_VERSION=3.0.16
-ARG LIBDNET_VERSION=1.18.0
+ARG LIBDAQ_VERSION=3.0.27
+ARG LIBDNET_VERSION=1.18.2
+
+ENV SNORT_VERSION=${SNORT_VERSION} \
+    HYPERSCAN_VERSION=${HYPERSCAN_VERSION} \
+    LIBDAQ_VERSION=${LIBDAQ_VERSION} \
+    LIBDNET_VERSION=${LIBDNET_VERSION}
 
 RUN set -eux; \
     apt-get update ; \
     apt-get install -y --no-install-recommends \
     build-essential cmake wget autoconf pkg-config \
-    libpcap0.8 libpcap0.8-dev libpcre3 libpcre3-dev \
+    libpcap0.8 libpcap0.8-dev libpcre2-8-0 libpcre2-dev \
     luajit libluajit-5.1-dev check hwloc libhwloc-dev \
     libssl3 libssl-dev zlib1g zlib1g-dev flex bison \
-    lzma lzma-dev uuid git libnuma-dev \
+    lzma liblzma-dev uuid git libnuma-dev \
     uuid-dev libunwind8 libunwind-dev libsafec3 \
     libsafec-dev libjemalloc-dev libjemalloc2 libtool \
     libfl-dev ca-certificates openssl \
-    libgoogle-perftools-dev libgoogle-perftools4 libtcmalloc-minimal4 ; \
+    libgoogle-perftools-dev libgoogle-perftools4 libtcmalloc-minimal4 libboost-all-dev ragel ; \
     apt-get clean ; \
     rm -rf /var/lib/apt/lists/*
 
@@ -89,7 +94,7 @@ RUN set -eux; \
     apt-get update && apt-get install -y --no-install-recommends \
     hwloc luajit libpcap0.8 libunwind8 \
     libjemalloc2 libgoogle-perftools4 libsafec3 \
-    python3 python3-requests libpcre3 libnuma1 ; \
+    python3 python3-requests libpcre2-8-0 libnuma1 ; \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --link --from=builder /usr/local/lib/ /usr/local/lib/
