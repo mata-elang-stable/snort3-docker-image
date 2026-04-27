@@ -3,12 +3,12 @@ name: Build Snort3 Docker Image
 on:
   push:
     branches:
-      - v2.0
+      - main
     tags:
       - "v*"
   pull_request:
     branches:
-      - v2.0 # Optional: Run the workflow on PRs target
+      - main
 
 env:
   REGISTRY: ghcr.io
@@ -47,14 +47,6 @@ jobs:
             latest=auto
             prefix=
             suffix=-debian
-
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v3
-      #   with:
-      #     platforms: linux/amd64,linux/arm64
-
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
 
       - name: Expose GitHub Runtime
         if: github.event_name != 'pull_request'
@@ -106,14 +98,6 @@ jobs:
             latest=false
             prefix=
             suffix=-alpine
-
-      # - name: Set up QEMU
-      #   uses: docker/setup-qemu-action@v3
-      #   with:
-      #     platforms: linux/amd64,linux/arm64
-
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
 
       - name: Build
         uses: docker/build-push-action@v6
