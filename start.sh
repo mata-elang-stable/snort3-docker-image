@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 PULLEDPORK_CONF_FILE="/usr/local/etc/pulledpork/pulledpork.conf"
 PULLEDPORT_TEMP_FILE="/tmp/pulledpork.conf"
@@ -7,6 +7,10 @@ PULLEDPORT_TEMP_FILE="/tmp/pulledpork.conf"
 community_ruleset=false
 registered_ruleset=false
 lightspd_ruleset=false
+
+# Define default listener to use
+listener="file"
+snort_log_path="/var/log/snort"
 
 # copy pulledpork.conf to temp file
 cp "$PULLEDPORK_CONF_FILE" "$PULLEDPORT_TEMP_FILE"
@@ -19,6 +23,15 @@ fi
 # check if file exists in touch /usr/local/etc/rules/local.rules
 if [ ! -f /usr/local/etc/snort3/rules/local.rules ]; then
     touch /usr/local/etc/snort3/rules/local.rules
+fi
+
+# check if env variable LISTENER is set and the value is either file or socket
+if [ -n "$LISTENER" ]; then
+    if [ "$LISTENER" != "file" ] && [ "$LISTENER" != "socket" ]; then
+        echo "LISTENER must be either file or socket"
+        exit 1
+    fi
+    listener="$LISTENER"
 fi
 
 # check if env variable NETWORK_INTERFACE is set correctly
@@ -41,22 +54,22 @@ fi
 # ruleset valid values are: community, registered, lightspd
 if [ -n "$RULESET" ]; then
     case "$RULESET" in
-        "community")
-            community_ruleset=true
-            echo "=> Using Community Ruleset"
-            ;;
-        "registered")
-            registered_ruleset=true
-            echo "=> Using Registered Ruleset"
-            ;;
-        "lightspd")
-            lightspd_ruleset=true
-            echo "=> Using LightSPD Ruleset"
-            ;;
-        *)
-            echo "RULESET must be one of: community, registered, lightspd. Default is community"
-            exit 1
-            ;;
+    "community")
+        community_ruleset=true
+        echo "=> Using Community Ruleset"
+        ;;
+    "registered")
+        registered_ruleset=true
+        echo "=> Using Registered Ruleset"
+        ;;
+    "lightspd")
+        lightspd_ruleset=true
+        echo "=> Using LightSPD Ruleset"
+        ;;
+    *)
+        echo "RULESET must be one of: community, registered, lightspd. Default is community"
+        exit 1
+        ;;
     esac
 fi
 
@@ -146,9 +159,26 @@ else
     pulledpork.py -c "$PULLEDPORT_TEMP_FILE" || exit $?
 fi
 
+# Build Snort positional arguments
+set -- -c /usr/local/etc/snort/snort.lua -y -s 65535 -m 0x1b -k none -l "$snort_log_path" -u snort -g snort --plugin-path=/usr/local/etc/snort3/so_rules/ -i "$NETWORK_INTERFACE"
+
+if [ "$listener" = "file" ]; then
+    echo "=> Using alert_json as the alert output"
+    set -- "$@" -A alert_json
+elif [ "$listener" = "socket" ]; then
+    echo "=> Setting alert_unixsock in $snort_log_path/snort_alert"
+    set -- "$@" -A alert_unixsock
+
+    # Check if the socket file exist, exit if not
+    if [ ! -S "$snort_log_path"/snort_alert ]; then
+        echo "=> Socket file $snort_log_path/snort_alert does not exist"
+        exit 1
+    fi
+fi
+
 # remove temp file
 rm -f "$PULLEDPORT_TEMP_FILE"
 
 echo "=> Starting Snort..."
 
-exec /usr/local/bin/snort -c /usr/local/etc/snort/snort.lua -y -s 65535 -m 0x1b -k none -l /var/log/snort -u snort -g snort --plugin-path=/usr/local/etc/snort3/so_rules/ -i "$NETWORK_INTERFACE"
+exec /usr/local/bin/snort "$@"
